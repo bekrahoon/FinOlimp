@@ -1,0 +1,8 @@
+# Dependencies used by run_stage_1_2.py and the accounting Excel export.
+# The OpenCode MCP service has its own locked environment under stage3_ai/.
+# Optional research benchmarks (including CatBoost) are not needed by this runner.
+numpy>=1.26,<3
+pandas>=2.2,<4
+PyYAML>=6,<7
+scikit-learn>=1.5,<2
+openpyxl>=3.1,<4

@@ -1,0 +1,14 @@
+README.md
+pyproject.toml
+finolimp_mcp/__init__.py
+finolimp_mcp/__main__.py
+finolimp_mcp/excel_reports.py
+finolimp_mcp/server.py
+finolimp_mcp/service.py
+finolimp_mcp/settings.py
+finolimp_mcp.egg-info/PKG-INFO
+finolimp_mcp.egg-info/SOURCES.txt
+finolimp_mcp.egg-info/dependency_links.txt
+finolimp_mcp.egg-info/requires.txt
+finolimp_mcp.egg-info/top_level.txt
+tests/test_service.py

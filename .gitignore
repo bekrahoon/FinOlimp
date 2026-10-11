@@ -1,0 +1,7 @@
+.finolimp/runtime/
+.finolimp/manual_runs/
+stage3_ai/.finolimp/runtime/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/

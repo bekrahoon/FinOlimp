@@ -1,0 +1,119 @@
+# Universalnyy rule-based dvizhok sverki 1C <-> ETM.
+# Vse pravila zdes; bez etogo fayla deystvuyut vstroennye defolty (= staroe povedenie).
+# Izmenenie lyubogo polya ne trebuet pravki koda.
+
+# Dopusk shozhdeniya summ (somy). Vse, chto men'she, schitaetsya soshedshimsya.
+tolerance: 0.01
+
+input:
+  # Poryadok perebora kodirovok vhodnyh CSV.
+  encodings: ["utf-8-sig", "utf-8", "cp1251"]
+  # Ubirat probely po krayam strokovyh kletok; pustye stroki -> otsutstvie znacheniya.
+  strip_strings: true
+  # Formaty dat (poryadok perebora); oststok dobyvaet svobodnyy parser.
+  date_formats: ["%Y-%m-%d", "%Y-%m-%d %H:%M:%S", "%d.%m.%Y", "%d.%m.%Y %H:%M:%S", "%d/%m/%Y", "%Y/%m/%d"]
+  # Tysyachnye razdeliteli v denezhnyh formatah ('1 234,56', 1'234.56).
+  thousands_separators: [" ", " ", "'", "’"]
+
+names:
+  # Stop-slova dlya norm_agent (nizhniy registr; primenyayutsya po granicam slov).
+  # Rasshireno otnositelno pervoy versii: ZAO/OAO/LLC/Ltd/GP/ChP/CHUP.
+  stopwords: ["осоо", "ooo", "ocoo", "ип", "зао", "oao", "оао", "llc", "ltd", "гп", "чп", "чуп"]
+  # Latin -> Cyrillic homoglyphs: samaya chastaya 'opechatka v 1 simvol'.
+  homoglyphs: {"a": "а", "e": "е", "o": "о", "p": "р", "c": "с", "x": "х",
+               "m": "м", "k": "к", "t": "т", "b": "в", "h": "н"}
+  # Fuzzy-sloy (difflib): >= suggest — podskazka cheloveku; >= auto + obschie bilety
+  # + odnoznachnost — avtomёrzh (tolko reestr, dengi vsegda strogie).
+  fuzzy_suggest_threshold: 0.90
+  fuzzy_auto_threshold: 0.94
+  auto_merge: true
+  # Subset-sloy (v2): korotkoe imya partii — strogoe token-podmnozhestvo rovno
+  # odnogo agenta yadra + obschie bilety (ulika iz aktov+ETM, bez reestra) —
+  # avtomerzh. Odnoznachnost obyazatelna; bez obschikh biletov — tolko podskazka.
+  subset_auto_merge: true
+  # enabled=false: tolko exact+alias (rezhim pervoy versii; dlya A/B-proverok).
+  enabled: true
+
+status_policy:
+  # Status, nalichie kotorogo v gruppe (papka+period) delaet gruppu "pereizdannoy".
+  reissued_markers: ["переиздан"]
+  # Eti statusy vybrasyvayutsya, esli gruppa pereizdana (schetchik -> ignored_draft_rows).
+  drop_if_reissued: ["черновик"]
+  # Eti statusy vybrasyvayutsya vsegda (poka pusto: novyh statusov ne videli).
+  always_drop: []
+
+tickets:
+  # Kusok tsifr koroche min_digits schitaetsya ne biletom, a musorom (-> quality_report).
+  min_digits: 10
+  # Sravnenie po hvostu dliny tail (10 znakov 1C vs 13 s kodom v ETM).
+  tail: 10
+
+payments:
+  # Maksimalnyy razryv dat dlya matcha platezhey po summe (dney). Pokryvaet nablyudennyy
+  # maksimum 99 dney s zapasom; suzhenie okna uberyozhet ot sluchaynyh skhlepyvaniy.
+  date_window_days: 120
+  # Match s gapom bol'she etogo porosity idet v quality_report kak long_gap_payment.
+  review_gap_days: 45
+  # Snachala tochnyy match summa + nomer ЦБ-С (comment v ETM), zatem okno po summe.
+  prefer_doc_match: true
+  doc_pattern: 'ЦБ-С\d+'
+
+# Markery stroki "voyda" v kolonke kind (nizhniy registr).
+void_kinds: ["войд", "void"]
+# Chto schitaem prodazhey dlya vojda-arkheologii (check_void_sale_gaps).
+sale_kinds: ["выкуп"]
+
+dates:
+  # Smeshannye chasovye poyasa padali s TypeError: privodim k naive + flag v quality.
+  normalize_tz: true
+  # Data vne [min_period - margin, max_period_end + margin] — opechatka goda.
+  range_margin_days: 15
+  # Voyd do prodazhi: vse sluchai v quality s gapom; <= edge — kray okna, bolshe — alarm.
+  edge_days: 45
+  check_balance_chain: true
+  balance_tolerance: 0.01
+
+currencies:
+  base: "KGS"
+  # Esli eta kolonkav ETM est' i polnost'yu zapolnena — ispol'zuetsya napryamuyu (legasy-put').
+  resolved_column: "amount_kgs"
+  # Inache pereschet: amount * kurs(currency, data). Kursy — iz kolonok reestra
+  # na datu <= daty operatsii (libo pervyy dostupnyy), libo iz fallback_rates.
+  amount_column: "amount"
+  currency_column: "currency"
+  rate_columns: {"USD": "rate_usd", "EUR": "rate_eur", "RUB": "rate_rub", "KZT": "rate_kzt"}
+  fallback_rates: {}
+
+agents:
+  # Pereimenovaniya agentov v seredine goda: klyuch -> kanonicheskoe imya.
+  # Klyuchi i znacheniya mozhno pisat' kak ugodno — sverka idet po norme.
+  # Primer: {"Старое ОсОО": "Новое ОсОО"}
+  aliases: {}
+
+labels:
+  # Kanonicheskaya podpis agenta: acts_first (= povedenie v1) ili most_frequent.
+  # Neizvestnoe znachenie — warning + acts_first (skript ne padaet).
+  source: "acts_first"
+
+comments:
+  # Otdel'nyy diagnoz "войд закрыт частично" vmesto obschego "суммы отличаются".
+  # Po umolchaniyu VYKLYUCHEN, chtoby ne menyat' sushchestvuyuschie kommentarii.
+  void_remainder_note: false
+
+v3:
+  # Mikroruly atributsii (adjudication 150): R1/R3a/R3b. enabled=false: rezhim v2.
+  enabled: true
+  # CONV_TOL dlya reg_eq_conv: kursy v stroke okrugleny (S110 +0.11, S119 +0.19).
+  conv_tol: 2.0
+  # R1: tolko znachimye summy (genuine-meloch S101-S105 < 200).
+  r1_min_diff: 500.0
+  # RA (agent-klass): porog znachimosti (meloch ne atributiruem).
+  ra_min_diff: 500.0
+  # R3: bliznets = ta zhe summa+vid, <= twin_window_days (nablyudennyy max ~4d).
+  twin_window_days: 7
+  # Data vygruzki: "auto" = max data acts+etm (menant nichego ne nuzhno).
+  data_end: "auto"
+  fresh_days: 31
+
+output:
+  quality_report: "quality_report.csv"

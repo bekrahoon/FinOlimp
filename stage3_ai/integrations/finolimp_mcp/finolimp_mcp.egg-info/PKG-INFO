@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: finolimp-mcp
+Version: 0.1.0
+Summary: OpenCode tools for the deterministic FinOlimp reconciliation workflow
+Requires-Python: >=3.11
+Requires-Dist: mcp<2,>=1.12
+Requires-Dist: openpyxl<4,>=3.1
+Requires-Dist: pandas<4,>=2.2
+Requires-Dist: PyYAML<7,>=6
